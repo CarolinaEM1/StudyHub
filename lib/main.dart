@@ -4,10 +4,14 @@ import 'package:provider/provider.dart';
 
 import 'providers/auth_provider.dart';
 import 'screens/splash_screen.dart';
+import 'firebase_options.dart';
+import 'providers/task_providers.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp();
+  await Firebase.initializeApp(
+  options: DefaultFirebaseOptions.currentPlatform,
+);
 
   runApp(const StudyHubApp());
 }
@@ -21,6 +25,9 @@ class StudyHubApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(
           create: (_) => AppAuthProvider(),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => TaskProvider(),
         ),
       ],
       child: MaterialApp(
