@@ -6,6 +6,8 @@ import 'profile_screen.dart';
 import 'tasks_screen.dart';
 import 'subscription_screen.dart';
 import 'notification_topics_screen.dart';
+import 'dart:io';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
@@ -45,15 +47,38 @@ class DashboardScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text('StudyHub'),
         actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 12),
-            child: CircleAvatar(
-              backgroundImage:
-                  user?.photoURL != null ? NetworkImage(user!.photoURL!) : null,
-              child: user?.photoURL == null ? const Icon(Icons.person) : null,
-            ),
-          ),
-        ],
+  StreamBuilder<DocumentSnapshot>(
+    stream: FirebaseFirestore.instance
+        .collection('users')
+        .doc(user!.uid)
+        .snapshots(),
+    builder: (context, snapshot) {
+      String localAvatar = '';
+
+      if (snapshot.hasData && snapshot.data!.exists) {
+        final data = snapshot.data!.data() as Map<String, dynamic>;
+        localAvatar = data['localAvatar'] ?? '';
+      }
+
+      final hasLocalAvatar =
+          localAvatar.isNotEmpty && File(localAvatar).existsSync();
+
+      return Padding(
+        padding: const EdgeInsets.only(right: 12),
+        child: CircleAvatar(
+          backgroundImage: hasLocalAvatar
+              ? FileImage(File(localAvatar))
+              : user.photoURL != null
+                  ? NetworkImage(user.photoURL!) as ImageProvider
+                  : null,
+          child: !hasLocalAvatar && user.photoURL == null
+              ? const Icon(Icons.person)
+              : null,
+        ),
+      );
+    },
+  ),
+],
       ),
       body: LayoutBuilder(
         builder: (context, constraints) {

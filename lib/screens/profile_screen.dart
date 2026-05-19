@@ -1,6 +1,9 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../providers/auth_provider.dart';
 import 'login_screen.dart';
@@ -22,6 +25,25 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
+  Future<void> changeAvatar(BuildContext context) async {
+    final image = await ImagePicker().pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 70,
+    );
+
+    if (image == null) return;
+
+    if (!context.mounted) return;
+
+    await context.read<AppAuthProvider>().updateLocalAvatar(image.path);
+
+    if (!context.mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Avatar actualizado')),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final user = context.watch<AppAuthProvider>().user;
@@ -37,24 +59,49 @@ class ProfileScreen extends StatelessWidget {
             .snapshots(),
         builder: (context, snapshot) {
           String plan = 'Sin plan';
+          String localAvatar = '';
 
           if (snapshot.hasData && snapshot.data!.exists) {
             final data = snapshot.data!.data() as Map<String, dynamic>;
             plan = data['plan'] ?? 'Sin plan';
+            localAvatar = data['localAvatar'] ?? '';
           }
+
+          final hasLocalAvatar =
+              localAvatar.isNotEmpty && File(localAvatar).existsSync();
 
           return Padding(
             padding: const EdgeInsets.all(24),
             child: Column(
               children: [
-                CircleAvatar(
-                  radius: 55,
-                  backgroundImage: user.photoURL != null
-                      ? NetworkImage(user.photoURL!)
-                      : null,
-                  child: user.photoURL == null
-                      ? const Icon(Icons.person, size: 55)
-                      : null,
+                Stack(
+                  children: [
+                    CircleAvatar(
+                      radius: 60,
+                      backgroundImage: hasLocalAvatar
+                          ? FileImage(File(localAvatar))
+                          : user.photoURL != null
+                              ? NetworkImage(user.photoURL!) as ImageProvider
+                              : null,
+                      child: !hasLocalAvatar && user.photoURL == null
+                          ? const Icon(Icons.person, size: 55)
+                          : null,
+                    ),
+                    Positioned(
+                      bottom: 0,
+                      right: 0,
+                      child: CircleAvatar(
+                        backgroundColor: const Color(0xFF2563EB),
+                        child: IconButton(
+                          icon: const Icon(
+                            Icons.camera_alt,
+                            color: Colors.white,
+                          ),
+                          onPressed: () => changeAvatar(context),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 20),
                 Text(
