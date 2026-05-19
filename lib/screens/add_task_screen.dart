@@ -37,21 +37,20 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
   }
 
   Future<void> saveTask() async {
-    if (titleController.text.isEmpty ||
-        descriptionController.text.isEmpty ||
-        subjectController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Completa todos los campos'),
-        ),
-      );
-      return;
-    }
+  if (titleController.text.isEmpty ||
+      descriptionController.text.isEmpty ||
+      subjectController.text.isEmpty) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Completa todos los campos')),
+    );
+    return;
+  }
 
-    setState(() {
-      loading = true;
-    });
+  setState(() {
+    loading = true;
+  });
 
+  try {
     await context.read<TaskProvider>().addTask(
           title: titleController.text,
           description: descriptionController.text,
@@ -62,7 +61,18 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
     if (!mounted) return;
 
     Navigator.pop(context);
+  } catch (e) {
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(e.toString())),
+    );
+
+    setState(() {
+      loading = false;
+    });
   }
+}
 
   @override
   void dispose() {
