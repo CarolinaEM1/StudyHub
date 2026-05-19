@@ -14,6 +14,33 @@ class DashboardScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final user = context.watch<AppAuthProvider>().user;
 
+    final items = [
+      _DashboardItem(
+        icon: Icons.task_alt_rounded,
+        title: 'Mis tareas',
+        subtitle: 'Consulta y administra tus tareas',
+        screen: const TasksScreen(),
+      ),
+      _DashboardItem(
+        icon: Icons.workspace_premium_rounded,
+        title: 'Suscripciones',
+        subtitle: 'Elige un plan académico',
+        screen: const SubscriptionScreen(),
+      ),
+      _DashboardItem(
+        icon: Icons.notifications_active_rounded,
+        title: 'Notificaciones',
+        subtitle: 'Suscríbete a temas de interés',
+        screen: const NotificationTopicsScreen(),
+      ),
+      _DashboardItem(
+        icon: Icons.person_rounded,
+        title: 'Mi perfil',
+        subtitle: 'Consulta tus datos y plan actual',
+        screen: const ProfileScreen(),
+      ),
+    ];
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('StudyHub'),
@@ -21,93 +48,88 @@ class DashboardScreen extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.only(right: 12),
             child: CircleAvatar(
-              backgroundImage: user?.photoURL != null
-                  ? NetworkImage(user!.photoURL!)
-                  : null,
-              child: user?.photoURL == null
-                  ? const Icon(Icons.person)
-                  : null,
+              backgroundImage:
+                  user?.photoURL != null ? NetworkImage(user!.photoURL!) : null,
+              child: user?.photoURL == null ? const Icon(Icons.person) : null,
             ),
           ),
         ],
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(18),
-        child: ListView(
-          children: [
-            Text(
-              'Hola, ${user?.displayName ?? 'Estudiante'}',
-              style: const TextStyle(
-                fontSize: 26,
-                fontWeight: FontWeight.bold,
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          final isDesktop = constraints.maxWidth >= 700;
+
+          return Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 1000),
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: ListView(
+                  children: [
+                    Text(
+                      'Hola, ${user?.displayName ?? 'Estudiante'}',
+                      style: TextStyle(
+                        fontSize: isDesktop ? 34 : 26,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    const Text(
+                      'Organiza tus actividades escolares desde aquí.',
+                      style: TextStyle(color: Colors.black54),
+                    ),
+                    const SizedBox(height: 24),
+                    GridView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: items.length,
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: isDesktop ? 2 : 1,
+                        crossAxisSpacing: 18,
+                        mainAxisSpacing: 18,
+                        childAspectRatio: isDesktop ? 3.2 : 3.6,
+                      ),
+                      itemBuilder: (context, index) {
+                        final item = items[index];
+
+                        return _DashboardCard(
+                          icon: item.icon,
+                          title: item.title,
+                          subtitle: item.subtitle,
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => item.screen,
+                              ),
+                            );
+                          },
+                        );
+                      },
+                    ),
+                  ],
+                ),
               ),
             ),
-            const SizedBox(height: 8),
-            const Text(
-              'Organiza tus actividades escolares desde aquí.',
-              style: TextStyle(color: Colors.black54),
-            ),
-            const SizedBox(height: 24),
-
-            _DashboardCard(
-              icon: Icons.task_alt_rounded,
-              title: 'Mis tareas',
-              subtitle: 'Consulta y administra tus tareas',
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => const TasksScreen(),
-                  ),
-                );
-              },
-            ),
-
-            _DashboardCard(
-              icon: Icons.workspace_premium_rounded,
-              title: 'Suscripciones',
-              subtitle: 'Elige un plan académico',
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => const SubscriptionScreen(),
-                  ),
-                );
-              },
-            ),
-
-            _DashboardCard(
-              icon: Icons.person_rounded,
-              title: 'Mi perfil',
-              subtitle: 'Consulta tus datos de Google',
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => const ProfileScreen(),
-                  ),
-                );
-              },
-            ),
-            _DashboardCard(
-              icon: Icons.notifications_active_rounded,
-              title: 'Notificaciones',
-              subtitle: 'Suscríbete a temas de interés',
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => const NotificationTopicsScreen(),
-                  ),
-                );
-              },
-            ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }
+}
+
+class _DashboardItem {
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final Widget screen;
+
+  _DashboardItem({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.screen,
+  });
 }
 
 class _DashboardCard extends StatelessWidget {
@@ -126,24 +148,49 @@ class _DashboardCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      margin: const EdgeInsets.only(bottom: 18),
       elevation: 2,
-      child: ListTile(
-        contentPadding: const EdgeInsets.all(18),
-        leading: CircleAvatar(
-          backgroundColor: const Color(0xFFDBEAFE),
-          child: Icon(
-            icon,
-            color: const Color(0xFF2563EB),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(18),
+          child: Row(
+            children: [
+              CircleAvatar(
+                radius: 28,
+                backgroundColor: const Color(0xFFDBEAFE),
+                child: Icon(
+                  icon,
+                  color: const Color(0xFF2563EB),
+                ),
+              ),
+              const SizedBox(width: 18),
+              Expanded(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 17,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      subtitle,
+                      style: const TextStyle(
+                        color: Colors.black54,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Icon(Icons.arrow_forward_ios_rounded, size: 18),
+            ],
           ),
         ),
-        title: Text(
-          title,
-          style: const TextStyle(fontWeight: FontWeight.bold),
-        ),
-        subtitle: Text(subtitle),
-        trailing: const Icon(Icons.arrow_forward_ios_rounded),
-        onTap: onTap,
       ),
     );
   }
