@@ -10,11 +10,13 @@ class TaskProvider extends ChangeNotifier {
     required String title,
     required String description,
     required String subject,
+    String imagePath = '',
   }) async {
     await _firestore.collection('tasks').add({
       'title': title,
       'description': description,
       'subject': subject,
+      'imagePath': imagePath,
       'createdAt': DateTime.now().toIso8601String(),
     });
   }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'payment_screen.dart';
 
 class SubscriptionScreen extends StatelessWidget {
   const SubscriptionScreen({super.key});
@@ -8,17 +9,17 @@ class SubscriptionScreen extends StatelessWidget {
     final plans = [
       {
         'name': 'Básico',
-        'price': '\$0',
+        'price': '\$0 MXN',
         'description': 'Hasta 10 tareas y 3 materias',
       },
       {
         'name': 'Premium',
-        'price': '\$99',
+        'price': '\$99 MXN',
         'description': 'Tareas y materias ilimitadas',
       },
       {
         'name': 'Pro',
-        'price': '\$149',
+        'price': '\$149 MXN',
         'description': 'Estadísticas y recordatorios avanzados',
       },
     ];
@@ -62,7 +63,17 @@ class SubscriptionScreen extends StatelessWidget {
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
-                      onPressed: () {},
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => PaymentScreen(
+                              planName: plan['name']!,
+                              price: plan['price']!,
+                            ),
+                          ),
+                        );
+                      },
                       child: const Text('Elegir plan'),
                     ),
                   ),

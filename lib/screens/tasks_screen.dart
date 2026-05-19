@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../providers/task_providers.dart';
 import 'add_task_screen.dart';
+import 'dart:io';
 
 class TasksScreen extends StatelessWidget {
   const TasksScreen({super.key});
@@ -40,26 +41,39 @@ class TasksScreen extends StatelessWidget {
 
               return Card(
                 margin: const EdgeInsets.only(bottom: 16),
-                child: ListTile(
-                  contentPadding: const EdgeInsets.all(16),
-                  leading: const CircleAvatar(
-                    child: Icon(Icons.task_alt),
-                  ),
-                  title: Text(task.title),
-                  subtitle: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(task.subject),
-                      const SizedBox(height: 6),
-                      Text(task.description),
-                    ],
-                  ),
-                  trailing: IconButton(
-                    icon: const Icon(Icons.delete),
-                    onPressed: () {
-                      taskProvider.deleteTask(task.id);
-                    },
-                  ),
+                clipBehavior: Clip.antiAlias,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (task.imagePath.isNotEmpty && File(task.imagePath).existsSync())
+                      Image.file(
+                        File(task.imagePath),
+                        height: 170,
+                        width: double.infinity,
+                        fit: BoxFit.cover,
+                      ),
+                    ListTile(
+                      contentPadding: const EdgeInsets.all(16),
+                      leading: const CircleAvatar(
+                        child: Icon(Icons.task_alt),
+                      ),
+                      title: Text(task.title),
+                      subtitle: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(task.subject),
+                          const SizedBox(height: 6),
+                          Text(task.description),
+                        ],
+                      ),
+                      trailing: IconButton(
+                        icon: const Icon(Icons.delete),
+                        onPressed: () {
+                          taskProvider.deleteTask(task.id);
+                        },
+                      ),
+                    ),
+                  ],
                 ),
               );
             },

@@ -3,6 +3,7 @@ class TaskModel {
   final String title;
   final String description;
   final String subject;
+  final String imagePath;
   final DateTime createdAt;
 
   TaskModel({
@@ -10,17 +11,9 @@ class TaskModel {
     required this.title,
     required this.description,
     required this.subject,
+    required this.imagePath,
     required this.createdAt,
   });
-
-  Map<String, dynamic> toMap() {
-    return {
-      'title': title,
-      'description': description,
-      'subject': subject,
-      'createdAt': createdAt.toIso8601String(),
-    };
-  }
 
   factory TaskModel.fromMap(String id, Map<String, dynamic> map) {
     return TaskModel(
@@ -28,6 +21,7 @@ class TaskModel {
       title: map['title'] ?? '',
       description: map['description'] ?? '',
       subject: map['subject'] ?? '',
+      imagePath: map['imagePath'] ?? '',
       createdAt: DateTime.parse(map['createdAt']),
     );
   }
