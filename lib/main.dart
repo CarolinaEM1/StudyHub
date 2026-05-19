@@ -6,12 +6,15 @@ import 'providers/auth_provider.dart';
 import 'screens/splash_screen.dart';
 import 'firebase_options.dart';
 import 'providers/task_providers.dart';
+import 'services/notification_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
   options: DefaultFirebaseOptions.currentPlatform,
 );
+
+  await NotificationService.init();
 
   runApp(const StudyHubApp());
 }

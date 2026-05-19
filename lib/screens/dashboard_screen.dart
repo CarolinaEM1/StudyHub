@@ -5,6 +5,7 @@ import '../providers/auth_provider.dart';
 import 'profile_screen.dart';
 import 'tasks_screen.dart';
 import 'subscription_screen.dart';
+import 'notification_topics_screen.dart';
 
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
@@ -85,6 +86,19 @@ class DashboardScreen extends StatelessWidget {
                   context,
                   MaterialPageRoute(
                     builder: (_) => const ProfileScreen(),
+                  ),
+                );
+              },
+            ),
+            _DashboardCard(
+              icon: Icons.notifications_active_rounded,
+              title: 'Notificaciones',
+              subtitle: 'Suscríbete a temas de interés',
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const NotificationTopicsScreen(),
                   ),
                 );
               },
