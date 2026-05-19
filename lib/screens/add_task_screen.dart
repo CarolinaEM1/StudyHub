@@ -1,5 +1,7 @@
 import 'dart:io';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
@@ -16,8 +18,8 @@ class AddTaskScreen extends StatefulWidget {
 class _AddTaskScreenState extends State<AddTaskScreen> {
   final titleController = TextEditingController();
   final descriptionController = TextEditingController();
-  final subjectController = TextEditingController();
 
+  String? selectedSubject;
   File? selectedImage;
   bool loading = false;
 
@@ -37,53 +39,54 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
   }
 
   Future<void> saveTask() async {
-  if (titleController.text.isEmpty ||
-      descriptionController.text.isEmpty ||
-      subjectController.text.isEmpty) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Completa todos los campos')),
-    );
-    return;
-  }
-
-  setState(() {
-    loading = true;
-  });
-
-  try {
-    await context.read<TaskProvider>().addTask(
-          title: titleController.text,
-          description: descriptionController.text,
-          subject: subjectController.text,
-          imagePath: selectedImage?.path ?? '',
-        );
-
-    if (!mounted) return;
-
-    Navigator.pop(context);
-  } catch (e) {
-    if (!mounted) return;
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(e.toString())),
-    );
+    if (titleController.text.isEmpty ||
+        descriptionController.text.isEmpty ||
+        selectedSubject == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Completa todos los campos')),
+      );
+      return;
+    }
 
     setState(() {
-      loading = false;
+      loading = true;
     });
+
+    try {
+      await context.read<TaskProvider>().addTask(
+            title: titleController.text,
+            description: descriptionController.text,
+            subject: selectedSubject!,
+            imagePath: selectedImage?.path ?? '',
+          );
+
+      if (!mounted) return;
+
+      Navigator.pop(context);
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString())),
+      );
+
+      setState(() {
+        loading = false;
+      });
+    }
   }
-}
 
   @override
   void dispose() {
     titleController.dispose();
     descriptionController.dispose();
-    subjectController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    final user = FirebaseAuth.instance.currentUser;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Nueva tarea'),
@@ -98,12 +101,50 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
             ),
           ),
           const SizedBox(height: 16),
-          TextField(
-            controller: subjectController,
-            decoration: const InputDecoration(
-              labelText: 'Materia',
-            ),
+
+          StreamBuilder<QuerySnapshot>(
+            stream: FirebaseFirestore.instance
+                .collection('subjects')
+                .where('userId', isEqualTo: user!.uid)
+                .snapshots(),
+            builder: (context, snapshot) {
+              if (!snapshot.hasData) {
+                return const LinearProgressIndicator();
+              }
+
+              final subjects = snapshot.data!.docs;
+
+              if (subjects.isEmpty) {
+                return const Text(
+                  'Primero agrega una materia desde el módulo Materias.',
+                  style: TextStyle(color: Colors.red),
+                );
+              }
+
+              return DropdownButtonFormField<String>(
+                value: selectedSubject,
+                decoration: const InputDecoration(
+                  labelText: 'Materia',
+                  prefixIcon: Icon(Icons.book_rounded),
+                ),
+                items: subjects.map((doc) {
+                  final data = doc.data() as Map<String, dynamic>;
+                  final name = data['name'] ?? '';
+
+                  return DropdownMenuItem<String>(
+                    value: name,
+                    child: Text(name),
+                  );
+                }).toList(),
+                onChanged: (value) {
+                  setState(() {
+                    selectedSubject = value;
+                  });
+                },
+              );
+            },
           ),
+
           const SizedBox(height: 16),
           TextField(
             controller: descriptionController,
@@ -113,6 +154,7 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
             ),
           ),
           const SizedBox(height: 20),
+
           GestureDetector(
             onTap: pickImage,
             child: Container(
@@ -154,7 +196,9 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
                     ),
             ),
           ),
+
           const SizedBox(height: 30),
+
           SizedBox(
             width: double.infinity,
             height: 55,
