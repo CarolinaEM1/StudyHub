@@ -8,6 +8,7 @@ import 'subscription_screen.dart';
 import 'notification_topics_screen.dart';
 import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'subjects_screen.dart';
 
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
@@ -40,6 +41,12 @@ class DashboardScreen extends StatelessWidget {
         title: 'Mi perfil',
         subtitle: 'Consulta tus datos y plan actual',
         screen: const ProfileScreen(),
+      ),
+      _DashboardItem(
+        icon: Icons.book_rounded,
+        title: 'Materias',
+        subtitle: 'Registra tus materias escolares',
+        screen: const SubjectsScreen(),
       ),
     ];
 
