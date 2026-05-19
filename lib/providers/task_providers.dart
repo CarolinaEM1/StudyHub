@@ -74,4 +74,19 @@ class TaskProvider extends ChangeNotifier {
   Future<void> deleteTask(String id) async {
     await _firestore.collection('tasks').doc(id).delete();
   }
+
+  Future<void> updateTask({
+  required String id,
+  required String title,
+  required String description,
+  required String subject,
+  required String imagePath,
+}) async {
+  await _firestore.collection('tasks').doc(id).update({
+    'title': title,
+    'description': description,
+    'subject': subject,
+    'imagePath': imagePath,
+  });
+}
 }
