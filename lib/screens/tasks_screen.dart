@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../providers/task_providers.dart';
 import 'add_task_screen.dart';
 import 'dart:io';
+import 'task_detail_screen.dart';
 
 class TasksScreen extends StatelessWidget {
   const TasksScreen({super.key});
@@ -53,6 +54,14 @@ class TasksScreen extends StatelessWidget {
                         fit: BoxFit.cover,
                       ),
                     ListTile(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => TaskDetailScreen(task: task),
+                          ),
+                        );
+                      },
                       contentPadding: const EdgeInsets.all(16),
                       leading: const CircleAvatar(
                         child: Icon(Icons.task_alt),
