@@ -4,6 +4,8 @@ class TaskModel {
   final String description;
   final String subject;
   final String imagePath;
+  final String priority;
+  final DateTime dueDate;
   final DateTime createdAt;
 
   TaskModel({
@@ -12,6 +14,8 @@ class TaskModel {
     required this.description,
     required this.subject,
     required this.imagePath,
+    required this.priority,
+    required this.dueDate,
     required this.createdAt,
   });
 
@@ -22,6 +26,8 @@ class TaskModel {
       description: map['description'] ?? '',
       subject: map['subject'] ?? '',
       imagePath: map['imagePath'] ?? '',
+      priority: map['priority'] ?? 'Media',
+      dueDate: DateTime.tryParse(map['dueDate'] ?? '') ?? DateTime.now(),
       createdAt: DateTime.parse(map['createdAt']),
     );
   }

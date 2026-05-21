@@ -60,6 +60,21 @@ class TaskDetailScreen extends StatelessWidget {
             avatar: const Icon(Icons.book, size: 18),
             label: Text(task.subject),
           ),
+          const SizedBox(height: 10),
+
+              Chip(
+                avatar: const Icon(Icons.flag_rounded, size: 18),
+                label: Text('Prioridad: ${task.priority}'),
+              ),
+
+              const SizedBox(height: 10),
+
+              Chip(
+                avatar: const Icon(Icons.calendar_month_rounded, size: 18),
+                label: Text(
+                  'Entrega: ${task.dueDate.day}/${task.dueDate.month}/${task.dueDate.year}',
+                ),
+              ),
           const SizedBox(height: 20),
           const Text(
             'Descripción',

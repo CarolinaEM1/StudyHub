@@ -24,6 +24,9 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
   late TextEditingController subjectController;
   late TextEditingController descriptionController;
 
+  late String selectedPriority;
+  late DateTime selectedDueDate;
+
   String imagePath = '';
   bool loading = false;
 
@@ -35,6 +38,9 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
     subjectController = TextEditingController(text: widget.task.subject);
     descriptionController =
         TextEditingController(text: widget.task.description);
+
+    selectedPriority = widget.task.priority;
+    selectedDueDate = widget.task.dueDate;
     imagePath = widget.task.imagePath;
   }
 
@@ -51,7 +57,31 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
     }
   }
 
+  Future<void> pickDueDate() async {
+    final date = await showDatePicker(
+      context: context,
+      initialDate: selectedDueDate,
+      firstDate: DateTime(2020),
+      lastDate: DateTime(2030),
+    );
+
+    if (date != null) {
+      setState(() {
+        selectedDueDate = date;
+      });
+    }
+  }
+
   Future<void> updateTask() async {
+    if (titleController.text.isEmpty ||
+        subjectController.text.isEmpty ||
+        descriptionController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Completa todos los campos')),
+      );
+      return;
+    }
+
     setState(() {
       loading = true;
     });
@@ -62,6 +92,8 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
           subject: subjectController.text,
           description: descriptionController.text,
           imagePath: imagePath,
+          priority: selectedPriority,
+          dueDate: selectedDueDate,
         );
 
     if (!mounted) return;
@@ -115,23 +147,75 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
                     ),
             ),
           ),
+
           const SizedBox(height: 20),
+
           TextField(
             controller: titleController,
-            decoration: const InputDecoration(labelText: 'Título'),
+            decoration: const InputDecoration(
+              labelText: 'Título',
+              prefixIcon: Icon(Icons.title_rounded),
+            ),
           ),
+
           const SizedBox(height: 16),
+
           TextField(
             controller: subjectController,
-            decoration: const InputDecoration(labelText: 'Materia'),
+            decoration: const InputDecoration(
+              labelText: 'Materia',
+              prefixIcon: Icon(Icons.book_rounded),
+            ),
           ),
+
           const SizedBox(height: 16),
+
+          DropdownButtonFormField<String>(
+            value: selectedPriority,
+            decoration: const InputDecoration(
+              labelText: 'Prioridad',
+              prefixIcon: Icon(Icons.flag_rounded),
+            ),
+            items: const [
+              DropdownMenuItem(value: 'Baja', child: Text('Baja')),
+              DropdownMenuItem(value: 'Media', child: Text('Media')),
+              DropdownMenuItem(value: 'Alta', child: Text('Alta')),
+            ],
+            onChanged: (value) {
+              setState(() {
+                selectedPriority = value!;
+              });
+            },
+          ),
+
+          const SizedBox(height: 16),
+
+          InkWell(
+            onTap: pickDueDate,
+            child: InputDecorator(
+              decoration: const InputDecoration(
+                labelText: 'Fecha de entrega',
+                prefixIcon: Icon(Icons.calendar_month_rounded),
+              ),
+              child: Text(
+                '${selectedDueDate.day}/${selectedDueDate.month}/${selectedDueDate.year}',
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 16),
+
           TextField(
             controller: descriptionController,
             maxLines: 4,
-            decoration: const InputDecoration(labelText: 'Descripción'),
+            decoration: const InputDecoration(
+              labelText: 'Descripción',
+              prefixIcon: Icon(Icons.description_rounded),
+            ),
           ),
+
           const SizedBox(height: 30),
+
           SizedBox(
             height: 55,
             child: ElevatedButton(

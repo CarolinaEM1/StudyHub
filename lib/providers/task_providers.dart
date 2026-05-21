@@ -11,6 +11,8 @@ class TaskProvider extends ChangeNotifier {
   required String title,
   required String description,
   required String subject,
+  required String priority,
+  required DateTime dueDate,
   String imagePath = '',
 }) async {
   final user = FirebaseAuth.instance.currentUser;
@@ -39,7 +41,10 @@ class TaskProvider extends ChangeNotifier {
     'description': description,
     'subject': subject,
     'imagePath': imagePath,
+    'priority': priority,
+    'dueDate': dueDate.toIso8601String(),
     'createdAt': DateTime.now().toIso8601String(),
+
   });
 }
 
@@ -75,18 +80,22 @@ class TaskProvider extends ChangeNotifier {
     await _firestore.collection('tasks').doc(id).delete();
   }
 
-  Future<void> updateTask({
+Future<void> updateTask({
   required String id,
   required String title,
   required String description,
   required String subject,
   required String imagePath,
+  required String priority,
+  required DateTime dueDate,
 }) async {
   await _firestore.collection('tasks').doc(id).update({
     'title': title,
     'description': description,
     'subject': subject,
     'imagePath': imagePath,
+    'priority': priority,
+    'dueDate': dueDate.toIso8601String(),
   });
 }
 }

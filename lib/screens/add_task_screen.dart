@@ -20,6 +20,9 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
   final descriptionController = TextEditingController();
 
   String? selectedSubject;
+  String selectedPriority = 'Media';
+  DateTime? selectedDueDate;
+
   File? selectedImage;
   bool loading = false;
 
@@ -38,12 +41,30 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
     }
   }
 
+  Future<void> pickDueDate() async {
+    final date = await showDatePicker(
+      context: context,
+      initialDate: selectedDueDate ?? DateTime.now(),
+      firstDate: DateTime.now(),
+      lastDate: DateTime(2030),
+    );
+
+    if (date != null) {
+      setState(() {
+        selectedDueDate = date;
+      });
+    }
+  }
+
   Future<void> saveTask() async {
     if (titleController.text.isEmpty ||
         descriptionController.text.isEmpty ||
-        selectedSubject == null) {
+        selectedSubject == null ||
+        selectedDueDate == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Completa todos los campos')),
+        const SnackBar(
+          content: Text('Completa todos los campos'),
+        ),
       );
       return;
     }
@@ -58,6 +79,8 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
             description: descriptionController.text,
             subject: selectedSubject!,
             imagePath: selectedImage?.path ?? '',
+            priority: selectedPriority,
+            dueDate: selectedDueDate!,
           );
 
       if (!mounted) return;
@@ -67,7 +90,9 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.toString())),
+        SnackBar(
+          content: Text(e.toString()),
+        ),
       );
 
       setState(() {
@@ -98,8 +123,10 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
             controller: titleController,
             decoration: const InputDecoration(
               labelText: 'Título',
+              prefixIcon: Icon(Icons.title_rounded),
             ),
           ),
+
           const SizedBox(height: 16),
 
           StreamBuilder<QuerySnapshot>(
@@ -146,13 +173,62 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
           ),
 
           const SizedBox(height: 16),
+
+          DropdownButtonFormField<String>(
+            value: selectedPriority,
+            decoration: const InputDecoration(
+              labelText: 'Prioridad',
+              prefixIcon: Icon(Icons.flag_rounded),
+            ),
+            items: const [
+              DropdownMenuItem(
+                value: 'Baja',
+                child: Text('Baja'),
+              ),
+              DropdownMenuItem(
+                value: 'Media',
+                child: Text('Media'),
+              ),
+              DropdownMenuItem(
+                value: 'Alta',
+                child: Text('Alta'),
+              ),
+            ],
+            onChanged: (value) {
+              setState(() {
+                selectedPriority = value!;
+              });
+            },
+          ),
+
+          const SizedBox(height: 16),
+
+          InkWell(
+            onTap: pickDueDate,
+            child: InputDecorator(
+              decoration: const InputDecoration(
+                labelText: 'Fecha de entrega',
+                prefixIcon: Icon(Icons.calendar_month_rounded),
+              ),
+              child: Text(
+                selectedDueDate == null
+                    ? 'Seleccionar fecha'
+                    : '${selectedDueDate!.day}/${selectedDueDate!.month}/${selectedDueDate!.year}',
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 16),
+
           TextField(
             controller: descriptionController,
             maxLines: 4,
             decoration: const InputDecoration(
               labelText: 'Descripción',
+              prefixIcon: Icon(Icons.description_rounded),
             ),
           ),
+
           const SizedBox(height: 20),
 
           GestureDetector(
