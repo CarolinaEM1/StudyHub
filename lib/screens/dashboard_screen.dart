@@ -21,42 +21,9 @@ class DashboardScreen extends StatelessWidget {
     final currentUser = FirebaseAuth.instance.currentUser;
 
     return Scaffold(
+      drawer: _AppDrawer(user: user),
       appBar: AppBar(
         title: const Text('StudyHub'),
-        actions: [
-          if (user != null)
-            StreamBuilder<DocumentSnapshot>(
-              stream: FirebaseFirestore.instance
-                  .collection('users')
-                  .doc(user.uid)
-                  .snapshots(),
-              builder: (context, snapshot) {
-                String localAvatar = '';
-
-                if (snapshot.hasData && snapshot.data!.exists) {
-                  final data = snapshot.data!.data() as Map<String, dynamic>;
-                  localAvatar = data['localAvatar'] ?? '';
-                }
-
-                final hasLocalAvatar =
-                    localAvatar.isNotEmpty && File(localAvatar).existsSync();
-
-                return Padding(
-                  padding: const EdgeInsets.only(right: 12),
-                  child: CircleAvatar(
-                    backgroundImage: hasLocalAvatar
-                        ? FileImage(File(localAvatar))
-                        : user.photoURL != null
-                            ? NetworkImage(user.photoURL!) as ImageProvider
-                            : null,
-                    child: !hasLocalAvatar && user.photoURL == null
-                        ? const Icon(Icons.person)
-                        : null,
-                  ),
-                );
-              },
-            ),
-        ],
       ),
       body: StreamBuilder<DocumentSnapshot>(
         stream: FirebaseFirestore.instance
@@ -71,44 +38,7 @@ class DashboardScreen extends StatelessWidget {
             plan = data['plan'] ?? 'Básico';
           }
 
-          final isBasic = plan == 'Básico';
-          final isPremium = plan == 'Premium';
           final isPro = plan == 'Pro';
-
-          final items = [
-            _DashboardItem(
-              icon: Icons.task_alt_rounded,
-              title: 'Mis tareas',
-              subtitle: 'Consulta y administra tus tareas',
-              screen: const TasksScreen(),
-            ),
-            _DashboardItem(
-              icon: Icons.book_rounded,
-              title: 'Materias',
-              subtitle: 'Registra tus materias escolares',
-              screen: const SubjectsScreen(),
-            ),
-            _DashboardItem(
-              icon: Icons.workspace_premium_rounded,
-              title: 'Suscripciones',
-              subtitle: 'Elige un plan académico',
-              screen: const SubscriptionScreen(),
-            ),
-            _DashboardItem(
-              icon: Icons.person_rounded,
-              title: 'Mi perfil',
-              subtitle: 'Consulta tus datos y plan actual',
-              screen: const ProfileScreen(),
-            ),
-
-            if (isPro)
-              _DashboardItem(
-                icon: Icons.notifications_active_rounded,
-                title: 'Notificaciones',
-                subtitle: 'Suscríbete a temas de interés',
-                screen: const NotificationTopicsScreen(),
-              ),
-          ];
 
           return LayoutBuilder(
             builder: (context, constraints) {
@@ -117,125 +47,276 @@ class DashboardScreen extends StatelessWidget {
               return Center(
                 child: ConstrainedBox(
                   constraints: const BoxConstraints(maxWidth: 1000),
-                  child: Padding(
+                  child: ListView(
                     padding: const EdgeInsets.all(20),
-                    child: ListView(
-                      children: [
-                        Text(
-                          'Hola, ${user?.displayName ?? 'Estudiante'}',
-                          style: TextStyle(
-                            fontSize: isDesktop ? 34 : 26,
-                            fontWeight: FontWeight.bold,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(24),
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [
+                              Color(0xFF2563EB),
+                              Color(0xFF60A5FA),
+                            ],
+                          ),
+                          borderRadius: BorderRadius.circular(28),
+                          boxShadow: const [
+                            BoxShadow(
+                              color: Colors.black12,
+                              blurRadius: 18,
+                              offset: Offset(0, 8),
+                            ),
+                          ],
+                        ),
+                        child: Row(
+                          children: [
+                            CircleAvatar(
+                              radius: isDesktop ? 42 : 34,
+                              backgroundImage: user?.photoURL != null
+                                  ? NetworkImage(user!.photoURL!)
+                                  : null,
+                              child: user?.photoURL == null
+                                  ? const Icon(Icons.person, size: 34)
+                                  : null,
+                            ),
+                            const SizedBox(width: 18),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Hola, ${user?.displayName ?? 'Estudiante'} 👋',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: isDesktop ? 28 : 22,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 6),
+                                  Text(
+                                    'Plan actual: $plan',
+                                    style: const TextStyle(
+                                      color: Colors.white70,
+                                      fontSize: 15,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      const SizedBox(height: 24),
+
+                      const Text(
+                        'Inicio',
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+
+                      const SizedBox(height: 12),
+
+                      Card(
+                        child: Padding(
+                          padding: const EdgeInsets.all(22),
+                          child: Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(16),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFDBEAFE),
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: const Icon(
+                                  Icons.school_rounded,
+                                  color: Color(0xFF2563EB),
+                                  size: 36,
+                                ),
+                              ),
+                              const SizedBox(width: 18),
+                              const Expanded(
+                                child: Text(
+                                  'Organiza tus tareas, materias y recordatorios académicos desde un solo lugar.',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    color: Colors.black87,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'Plan actual: $plan',
-                          style: const TextStyle(
-                            color: Color(0xFF2563EB),
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        const Text(
-                          'Organiza tus actividades escolares desde aquí.',
-                          style: TextStyle(color: Colors.black54),
-                        ),
-                        const SizedBox(height: 24),
+                      ),
 
-                        if (isPro)
-                          StreamBuilder<QuerySnapshot>(
-                            stream: FirebaseFirestore.instance
-                                .collection('tasks')
-                                .where(
-                                  'userId',
-                                  isEqualTo: currentUser.uid,
-                                )
-                                .snapshots(),
-                            builder: (context, snapshot) {
-                              final totalTasks = snapshot.hasData
-                                  ? snapshot.data!.docs.length
-                                  : 0;
+                      const SizedBox(height: 20),
 
-                              int pendingSoon = 0;
+                      if (isPro)
+                        StreamBuilder<QuerySnapshot>(
+                          stream: FirebaseFirestore.instance
+                              .collection('tasks')
+                              .where('userId', isEqualTo: currentUser.uid)
+                              .snapshots(),
+                          builder: (context, snapshot) {
+                            final totalTasks =
+                                snapshot.hasData ? snapshot.data!.docs.length : 0;
 
-                              if (snapshot.hasData) {
-                                final now = DateTime.now();
+                            int pendingSoon = 0;
 
-                                for (final doc in snapshot.data!.docs) {
-                                  final data =
-                                      doc.data() as Map<String, dynamic>;
+                            if (snapshot.hasData) {
+                              final now = DateTime.now();
 
-                                  final dueDate = DateTime.tryParse(
-                                    data['dueDate'] ?? '',
-                                  );
+                              for (final doc in snapshot.data!.docs) {
+                                final data = doc.data() as Map<String, dynamic>;
+                                final dueDate = DateTime.tryParse(
+                                  data['dueDate'] ?? '',
+                                );
 
-                                  if (dueDate != null &&
-                                      dueDate.isAfter(now) &&
-                                      dueDate.difference(now).inDays <= 7) {
-                                    pendingSoon++;
-                                  }
+                                if (dueDate != null &&
+                                    dueDate.isAfter(now) &&
+                                    dueDate.difference(now).inDays <= 7) {
+                                  pendingSoon++;
                                 }
                               }
+                            }
 
-                              return Column(
-                                children: [
-                                  Row(
-                                    children: [
-                                      Expanded(
-                                        child: _SummaryCard(
-                                          title: 'Tareas',
-                                          value: '$totalTasks',
-                                          icon: Icons.task_alt_rounded,
-                                        ),
-                                      ),
-                                      const SizedBox(width: 12),
-                                      Expanded(
-                                        child: _SummaryCard(
-                                          title: 'Próximas',
-                                          value: '$pendingSoon',
-                                          icon: Icons.calendar_month_rounded,
-                                        ),
-                                      ),
-                                    ],
+                            return Row(
+                              children: [
+                                Expanded(
+                                  child: _SummaryCard(
+                                    title: 'Tareas',
+                                    value: '$totalTasks',
+                                    icon: Icons.task_alt_rounded,
                                   ),
-                                  const SizedBox(height: 18),
-                                ],
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: _SummaryCard(
+                                    title: 'Próximas',
+                                    value: '$pendingSoon',
+                                    icon: Icons.calendar_month_rounded,
+                                  ),
+                                ),
+                              ],
+                            );
+                          },
+                        ),
+
+                      if (!isPro)
+                        Card(
+                          child: ListTile(
+                            leading: const CircleAvatar(
+                              backgroundColor: Color(0xFFDBEAFE),
+                              child: Icon(
+                                Icons.workspace_premium_rounded,
+                                color: Color(0xFF2563EB),
+                              ),
+                            ),
+                            title: const Text(
+                              'Mejora tu experiencia',
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                            subtitle: const Text(
+                              'Actualiza a Pro para desbloquear estadísticas y notificaciones.',
+                            ),
+                            trailing: const Icon(Icons.arrow_forward_ios_rounded),
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => const SubscriptionScreen(),
+                                ),
                               );
                             },
                           ),
+                        ),
 
-                        GridView.builder(
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          itemCount: items.length,
-                          gridDelegate:
-                              SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: isDesktop ? 2 : 1,
-                            crossAxisSpacing: 18,
-                            mainAxisSpacing: 18,
-                            childAspectRatio: isDesktop ? 3.2 : 3.6,
+                      const SizedBox(height: 24),
+
+                      const Text(
+                        'Accesos rápidos',
+                        style: TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+
+                      const SizedBox(height: 12),
+
+                      GridView.count(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        crossAxisCount: isDesktop ? 4 : 2,
+                        crossAxisSpacing: 14,
+                        mainAxisSpacing: 14,
+                        children: [
+                          _QuickAccessCard(
+                            title: 'Tareas',
+                            icon: Icons.task_alt_rounded,
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => const TasksScreen(),
+                                ),
+                              );
+                            },
                           ),
-                          itemBuilder: (context, index) {
-                            final item = items[index];
-
-                            return _DashboardCard(
-                              icon: item.icon,
-                              title: item.title,
-                              subtitle: item.subtitle,
+                          _QuickAccessCard(
+                            title: 'Materias',
+                            icon: Icons.book_rounded,
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => const SubjectsScreen(),
+                                ),
+                              );
+                            },
+                          ),
+                          _QuickAccessCard(
+                            title: 'Planes',
+                            icon: Icons.workspace_premium_rounded,
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => const SubscriptionScreen(),
+                                ),
+                              );
+                            },
+                          ),
+                          _QuickAccessCard(
+                            title: 'Perfil',
+                            icon: Icons.person_rounded,
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => const ProfileScreen(),
+                                ),
+                              );
+                            },
+                          ),
+                          if (isPro)
+                            _QuickAccessCard(
+                              title: 'Notificaciones',
+                              icon: Icons.notifications_active_rounded,
                               onTap: () {
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (_) => item.screen,
+                                    builder: (_) =>
+                                        const NotificationTopicsScreen(),
                                   ),
                                 );
                               },
-                            );
-                          },
-                        ),
-                      ],
-                    ),
+                            ),
+                        ],
+                      ),
+                    ],
                   ),
                 ),
               );
@@ -247,18 +328,222 @@ class DashboardScreen extends StatelessWidget {
   }
 }
 
-class _DashboardItem {
+class _AppDrawer extends StatelessWidget {
+  final User? user;
+
+  const _AppDrawer({
+    required this.user,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final currentUser = FirebaseAuth.instance.currentUser;
+
+    return Drawer(
+      child: StreamBuilder<DocumentSnapshot>(
+        stream: FirebaseFirestore.instance
+            .collection('users')
+            .doc(currentUser!.uid)
+            .snapshots(),
+        builder: (context, snapshot) {
+          String plan = 'Básico';
+          String localAvatar = '';
+
+          if (snapshot.hasData && snapshot.data!.exists) {
+            final data = snapshot.data!.data() as Map<String, dynamic>;
+            plan = data['plan'] ?? 'Básico';
+            localAvatar = data['localAvatar'] ?? '';
+          }
+
+          final isPro = plan == 'Pro';
+          final hasLocalAvatar =
+              localAvatar.isNotEmpty && File(localAvatar).existsSync();
+
+          return ListView(
+            padding: EdgeInsets.zero,
+            children: [
+              DrawerHeader(
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      Color(0xFF2563EB),
+                      Color(0xFF60A5FA),
+                    ],
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    CircleAvatar(
+                      radius: 34,
+                      backgroundImage: hasLocalAvatar
+                          ? FileImage(File(localAvatar))
+                          : user?.photoURL != null
+                              ? NetworkImage(user!.photoURL!) as ImageProvider
+                              : null,
+                      child: !hasLocalAvatar && user?.photoURL == null
+                          ? const Icon(Icons.person)
+                          : null,
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      user?.displayName ?? 'Estudiante',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 18,
+                      ),
+                    ),
+                    Text(
+                      plan,
+                      style: const TextStyle(color: Colors.white70),
+                    ),
+                  ],
+                ),
+              ),
+              _DrawerItem(
+                icon: Icons.home_rounded,
+                title: 'Inicio',
+                onTap: () => Navigator.pop(context),
+              ),
+              _DrawerItem(
+                icon: Icons.task_alt_rounded,
+                title: 'Mis tareas',
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const TasksScreen(),
+                    ),
+                  );
+                },
+              ),
+              _DrawerItem(
+                icon: Icons.book_rounded,
+                title: 'Materias',
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const SubjectsScreen(),
+                    ),
+                  );
+                },
+              ),
+              _DrawerItem(
+                icon: Icons.workspace_premium_rounded,
+                title: 'Suscripciones',
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const SubscriptionScreen(),
+                    ),
+                  );
+                },
+              ),
+              if (isPro)
+                _DrawerItem(
+                  icon: Icons.notifications_active_rounded,
+                  title: 'Notificaciones',
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const NotificationTopicsScreen(),
+                      ),
+                    );
+                  },
+                ),
+              _DrawerItem(
+                icon: Icons.person_rounded,
+                title: 'Mi perfil',
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const ProfileScreen(),
+                    ),
+                  );
+                },
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _DrawerItem extends StatelessWidget {
   final IconData icon;
   final String title;
-  final String subtitle;
-  final Widget screen;
+  final VoidCallback onTap;
 
-  _DashboardItem({
+  const _DrawerItem({
     required this.icon,
     required this.title,
-    required this.subtitle,
-    required this.screen,
+    required this.onTap,
   });
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      leading: Icon(icon, color: const Color(0xFF2563EB)),
+      title: Text(title),
+      onTap: onTap,
+    );
+  }
+}
+
+class _QuickAccessCard extends StatelessWidget {
+  final String title;
+  final IconData icon;
+  final VoidCallback onTap;
+
+  const _QuickAccessCard({
+    required this.title,
+    required this.icon,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: InkWell(
+        borderRadius: BorderRadius.circular(24),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(18),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(18),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFDBEAFE),
+                  borderRadius: BorderRadius.circular(22),
+                ),
+                child: Icon(
+                  icon,
+                  color: const Color(0xFF2563EB),
+                  size: 34,
+                ),
+              ),
+              const SizedBox(height: 14),
+              Text(
+                title,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 class _SummaryCard extends StatelessWidget {
@@ -275,7 +560,6 @@ class _SummaryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      elevation: 2,
       child: Padding(
         padding: const EdgeInsets.all(18),
         child: Column(
@@ -289,7 +573,7 @@ class _SummaryCard extends StatelessWidget {
             Text(
               value,
               style: const TextStyle(
-                fontSize: 24,
+                fontSize: 26,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -298,70 +582,6 @@ class _SummaryCard extends StatelessWidget {
               style: const TextStyle(color: Colors.black54),
             ),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-class _DashboardCard extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final VoidCallback onTap;
-
-  const _DashboardCard({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      elevation: 2,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(12),
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.all(18),
-          child: Row(
-            children: [
-              CircleAvatar(
-                radius: 28,
-                backgroundColor: const Color(0xFFDBEAFE),
-                child: Icon(
-                  icon,
-                  color: const Color(0xFF2563EB),
-                ),
-              ),
-              const SizedBox(width: 18),
-              Expanded(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 17,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      subtitle,
-                      style: const TextStyle(
-                        color: Colors.black54,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const Icon(Icons.arrow_forward_ios_rounded, size: 18),
-            ],
-          ),
         ),
       ),
     );

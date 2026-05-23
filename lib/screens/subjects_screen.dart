@@ -13,21 +13,49 @@ class _SubjectsScreenState extends State<SubjectsScreen> {
   final subjectController = TextEditingController();
 
   Future<void> addSubject() async {
-    final user = FirebaseAuth.instance.currentUser;
+  final user = FirebaseAuth.instance.currentUser;
 
-    if (subjectController.text.isEmpty || user == null) return;
+  if (subjectController.text.isEmpty || user == null) return;
 
-    await FirebaseFirestore.instance.collection('subjects').add({
-      'userId': user.uid,
-      'name': subjectController.text,
-      'createdAt': DateTime.now().toIso8601String(),
-    });
+  final userDoc = await FirebaseFirestore.instance
+      .collection('users')
+      .doc(user.uid)
+      .get();
 
-    subjectController.clear();
+  final plan = userDoc.data()?['plan'] ?? 'Básico';
 
+  final subjectsSnapshot = await FirebaseFirestore.instance
+      .collection('subjects')
+      .where('userId', isEqualTo: user.uid)
+      .get();
+
+  if (plan == 'Básico' && subjectsSnapshot.docs.length >= 3) {
     if (!mounted) return;
+
     Navigator.pop(context);
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text(
+          'Tu plan Básico solo permite crear hasta 3 materias. Actualiza a Premium o Pro para materias ilimitadas.',
+        ),
+      ),
+    );
+
+    return;
   }
+
+  await FirebaseFirestore.instance.collection('subjects').add({
+    'userId': user.uid,
+    'name': subjectController.text,
+    'createdAt': DateTime.now().toIso8601String(),
+  });
+
+  subjectController.clear();
+
+  if (!mounted) return;
+  Navigator.pop(context);
+}
 
   void showAddSubjectDialog() {
     showDialog(

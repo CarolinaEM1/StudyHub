@@ -32,14 +32,18 @@ class _TasksScreenState extends State<TasksScreen> {
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
             child: TextField(
               decoration: InputDecoration(
-                hintText: 'Buscar tarea...',
+                hintText: 'Buscar tarea o materia...',
                 prefixIcon: const Icon(Icons.search),
-                filled: true,
-                fillColor: Colors.grey.shade100,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(18),
-                  borderSide: BorderSide.none,
-                ),
+                suffixIcon: searchText.isNotEmpty
+                    ? IconButton(
+                        icon: const Icon(Icons.close),
+                        onPressed: () {
+                          setState(() {
+                            searchText = '';
+                          });
+                        },
+                      )
+                    : null,
               ),
               onChanged: (value) {
                 setState(() {
@@ -58,38 +62,22 @@ class _TasksScreenState extends State<TasksScreen> {
                   _FilterChipItem(
                     label: 'Todas',
                     selected: selectedFilter == 'Todas',
-                    onTap: () {
-                      setState(() {
-                        selectedFilter = 'Todas';
-                      });
-                    },
+                    onTap: () => setState(() => selectedFilter = 'Todas'),
                   ),
                   _FilterChipItem(
                     label: 'Alta',
                     selected: selectedFilter == 'Alta',
-                    onTap: () {
-                      setState(() {
-                        selectedFilter = 'Alta';
-                      });
-                    },
+                    onTap: () => setState(() => selectedFilter = 'Alta'),
                   ),
                   _FilterChipItem(
                     label: 'Media',
                     selected: selectedFilter == 'Media',
-                    onTap: () {
-                      setState(() {
-                        selectedFilter = 'Media';
-                      });
-                    },
+                    onTap: () => setState(() => selectedFilter = 'Media'),
                   ),
                   _FilterChipItem(
                     label: 'Baja',
                     selected: selectedFilter == 'Baja',
-                    onTap: () {
-                      setState(() {
-                        selectedFilter = 'Baja';
-                      });
-                    },
+                    onTap: () => setState(() => selectedFilter = 'Baja'),
                   ),
                 ],
               ),
@@ -101,9 +89,7 @@ class _TasksScreenState extends State<TasksScreen> {
               stream: taskProvider.getTasks(),
               builder: (context, snapshot) {
                 if (!snapshot.hasData) {
-                  return const Center(
-                    child: CircularProgressIndicator(),
-                  );
+                  return const Center(child: CircularProgressIndicator());
                 }
 
                 var tasks = snapshot.data!;
@@ -116,12 +102,8 @@ class _TasksScreenState extends State<TasksScreen> {
 
                 if (searchText.isNotEmpty) {
                   tasks = tasks.where((task) {
-                    return task.title
-                            .toLowerCase()
-                            .contains(searchText) ||
-                        task.subject
-                            .toLowerCase()
-                            .contains(searchText);
+                    return task.title.toLowerCase().contains(searchText) ||
+                        task.subject.toLowerCase().contains(searchText);
                   }).toList();
                 }
 
@@ -132,120 +114,54 @@ class _TasksScreenState extends State<TasksScreen> {
                 }
 
                 return ListView.builder(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 90),
                   itemCount: tasks.length,
                   itemBuilder: (context, index) {
                     final task = tasks[index];
 
-                    final hasImage = task.imagePath.isNotEmpty &&
-                        File(task.imagePath).existsSync();
-
-                    return Card(
-                      margin: const EdgeInsets.only(bottom: 16),
-                      clipBehavior: Clip.antiAlias,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          if (hasImage)
-                            Image.file(
-                              File(task.imagePath),
-                              height: 170,
-                              width: double.infinity,
-                              fit: BoxFit.cover,
-                            ),
-                          ListTile(
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) =>
-                                      TaskDetailScreen(task: task),
-                                ),
-                              );
-                            },
-                            contentPadding: const EdgeInsets.all(16),
-                            leading: CircleAvatar(
-                              backgroundColor: _priorityColor(
-                                task.priority,
-                              ).withOpacity(0.15),
-                              child: Icon(
-                                Icons.task_alt,
-                                color: _priorityColor(task.priority),
-                              ),
-                            ),
-                            title: Text(
-                              task.title,
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            subtitle: Column(
-                              crossAxisAlignment:
-                                  CrossAxisAlignment.start,
-                              children: [
-                                Text(task.subject),
-                                const SizedBox(height: 6),
-                                Text(task.description),
-                                const SizedBox(height: 8),
-                                Row(
-                                  children: [
-                                    Icon(
-                                      Icons.flag_rounded,
-                                      size: 16,
-                                      color:
-                                          _priorityColor(task.priority),
-                                    ),
-                                    const SizedBox(width: 4),
-                                    Text(
-                                      'Prioridad: ${task.priority}',
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 4),
-                                Row(
-                                  children: [
-                                    const Icon(
-                                      Icons.calendar_month_rounded,
-                                      size: 16,
-                                      color: Colors.blue,
-                                    ),
-                                    const SizedBox(width: 4),
-                                    Text(
-                                      'Entrega: ${task.dueDate.day}/${task.dueDate.month}/${task.dueDate.year}',
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                            trailing: IconButton(
-                              icon: const Icon(Icons.delete),
-                              onPressed: () async {
-                                final confirm = await showDialog<bool>(
-                                  context: context,
-                                  builder: (_) => AlertDialog(
-                                    title: const Text('Eliminar tarea'),
-                                    content: const Text('¿Seguro que deseas eliminar esta tarea?'),
-                                    actions: [
-                                      TextButton(
-                                        onPressed: () => Navigator.pop(context, false),
-                                        child: const Text('Cancelar'),
-                                      ),
-                                      ElevatedButton(
-                                        onPressed: () => Navigator.pop(context, true),
-                                        child: const Text('Eliminar'),
-                                      ),
-                                    ],
-                                  ),
-                                );
-
-                                if (confirm == true) {
-                                  taskProvider.deleteTask(task.id);
-                                }
-                              },
-                            ),
+                    return _TaskCard(
+                      title: task.title,
+                      description: task.description,
+                      subject: task.subject,
+                      priority: task.priority,
+                      dueDate:
+                          '${task.dueDate.day}/${task.dueDate.month}/${task.dueDate.year}',
+                      imagePath: task.imagePath,
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => TaskDetailScreen(task: task),
                           ),
-                        ],
-                      ),
+                        );
+                      },
+                      onDelete: () async {
+                        final confirm = await showDialog<bool>(
+                          context: context,
+                          builder: (_) => AlertDialog(
+                            title: const Text('Eliminar tarea'),
+                            content: const Text(
+                              '¿Seguro que deseas eliminar esta tarea?',
+                            ),
+                            actions: [
+                              TextButton(
+                                onPressed: () =>
+                                    Navigator.pop(context, false),
+                                child: const Text('Cancelar'),
+                              ),
+                              ElevatedButton(
+                                onPressed: () =>
+                                    Navigator.pop(context, true),
+                                child: const Text('Eliminar'),
+                              ),
+                            ],
+                          ),
+                        );
+
+                        if (confirm == true) {
+                          taskProvider.deleteTask(task.id);
+                        }
+                      },
                     );
                   },
                 );
@@ -254,8 +170,9 @@ class _TasksScreenState extends State<TasksScreen> {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
-        child: const Icon(Icons.add),
+      floatingActionButton: FloatingActionButton.extended(
+        icon: const Icon(Icons.add),
+        label: const Text('Nueva tarea'),
         onPressed: () {
           Navigator.push(
             context,
@@ -267,8 +184,30 @@ class _TasksScreenState extends State<TasksScreen> {
       ),
     );
   }
+}
 
-  Color _priorityColor(String priority) {
+class _TaskCard extends StatelessWidget {
+  final String title;
+  final String description;
+  final String subject;
+  final String priority;
+  final String dueDate;
+  final String imagePath;
+  final VoidCallback onTap;
+  final VoidCallback onDelete;
+
+  const _TaskCard({
+    required this.title,
+    required this.description,
+    required this.subject,
+    required this.priority,
+    required this.dueDate,
+    required this.imagePath,
+    required this.onTap,
+    required this.onDelete,
+  });
+
+  Color get priorityColor {
     switch (priority) {
       case 'Alta':
         return Colors.red;
@@ -277,8 +216,233 @@ class _TasksScreenState extends State<TasksScreen> {
       case 'Baja':
         return Colors.green;
       default:
-        return Colors.blue;
+        return const Color(0xFF2563EB);
     }
+  }
+
+  IconData get priorityIcon {
+    switch (priority) {
+      case 'Alta':
+        return Icons.priority_high_rounded;
+      case 'Media':
+        return Icons.flag_rounded;
+      case 'Baja':
+        return Icons.check_circle_rounded;
+      default:
+        return Icons.flag_rounded;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final hasImage = imagePath.isNotEmpty && File(imagePath).existsSync();
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(26),
+        boxShadow: const [
+          BoxShadow(
+            color: Colors.black12,
+            blurRadius: 14,
+            offset: Offset(0, 6),
+          ),
+        ],
+      ),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(26),
+        onTap: onTap,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (hasImage)
+              Stack(
+                children: [
+                  ClipRRect(
+                    borderRadius: const BorderRadius.vertical(
+                      top: Radius.circular(26),
+                    ),
+                    child: Image.file(
+                      File(imagePath),
+                      height: 180,
+                      width: double.infinity,
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                  Positioned(
+                    top: 14,
+                    right: 14,
+                    child: _PriorityBadge(
+                      label: priority,
+                      color: priorityColor,
+                      icon: priorityIcon,
+                    ),
+                  ),
+                ],
+              ),
+
+            if (!hasImage)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(18, 18, 18, 0),
+                child: Align(
+                  alignment: Alignment.centerRight,
+                  child: _PriorityBadge(
+                    label: priority,
+                    color: priorityColor,
+                    icon: priorityIcon,
+                  ),
+                ),
+              ),
+
+            Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFDBEAFE),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: const Icon(
+                          Icons.task_alt_rounded,
+                          color: Color(0xFF2563EB),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          title,
+                          style: const TextStyle(
+                            fontSize: 19,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: onDelete,
+                        icon: const Icon(Icons.delete_outline_rounded),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 10),
+
+                  Text(
+                    description,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: Colors.black54,
+                      height: 1.4,
+                    ),
+                  ),
+
+                  const SizedBox(height: 18),
+
+                  Wrap(
+                    spacing: 10,
+                    runSpacing: 10,
+                    children: [
+                      _InfoPill(
+                        icon: Icons.book_rounded,
+                        label: subject,
+                      ),
+                      _InfoPill(
+                        icon: Icons.calendar_month_rounded,
+                        label: dueDate,
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _PriorityBadge extends StatelessWidget {
+  final String label;
+  final Color color;
+  final IconData icon;
+
+  const _PriorityBadge({
+    required this.label,
+    required this.color,
+    required this.icon,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: 12,
+        vertical: 7,
+      ),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.92),
+        borderRadius: BorderRadius.circular(18),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, color: Colors.white, size: 16),
+          const SizedBox(width: 5),
+          Text(
+            label,
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _InfoPill extends StatelessWidget {
+  final IconData icon;
+  final String label;
+
+  const _InfoPill({
+    required this.icon,
+    required this.label,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: 12,
+        vertical: 9,
+      ),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF1F5F9),
+        borderRadius: BorderRadius.circular(18),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 16, color: const Color(0xFF2563EB)),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: const TextStyle(
+              fontWeight: FontWeight.w600,
+              color: Colors.black87,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 
