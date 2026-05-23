@@ -1,5 +1,6 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class NotificationTopicsScreen extends StatefulWidget {
   const NotificationTopicsScreen({super.key});
@@ -9,25 +10,55 @@ class NotificationTopicsScreen extends StatefulWidget {
       _NotificationTopicsScreenState();
 }
 
-class _NotificationTopicsScreenState
-    extends State<NotificationTopicsScreen> {
+class _NotificationTopicsScreenState extends State<NotificationTopicsScreen> {
   final Map<String, bool> topics = {
     'Recordatorios de tareas': false,
     'Exámenes': false,
     'Consejos de estudio': false,
   };
 
+  @override
+  void initState() {
+    super.initState();
+    loadTopics();
+  }
+
+  Future<void> loadTopics() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    setState(() {
+      topics['Recordatorios de tareas'] =
+          prefs.getBool('recordatorios_de_tareas') ?? false;
+      topics['Exámenes'] = prefs.getBool('examenes') ?? false;
+      topics['Consejos de estudio'] =
+          prefs.getBool('consejos_de_estudio') ?? false;
+    });
+  }
+
+  String getTopicKey(String topic) {
+    switch (topic) {
+      case 'Recordatorios de tareas':
+        return 'recordatorios_de_tareas';
+      case 'Exámenes':
+        return 'examenes';
+      case 'Consejos de estudio':
+        return 'consejos_de_estudio';
+      default:
+        return topic.toLowerCase().replaceAll(' ', '_');
+    }
+  }
+
   Future<void> toggleTopic(String topic, bool value) async {
-    final topicKey = topic
-        .toLowerCase()
-        .replaceAll(' ', '_')
-        .replaceAll('á', 'a');
+    final topicKey = getTopicKey(topic);
+    final prefs = await SharedPreferences.getInstance();
 
     if (value) {
       await FirebaseMessaging.instance.subscribeToTopic(topicKey);
     } else {
       await FirebaseMessaging.instance.unsubscribeFromTopic(topicKey);
     }
+
+    await prefs.setBool(topicKey, value);
 
     setState(() {
       topics[topic] = value;
@@ -38,9 +69,7 @@ class _NotificationTopicsScreenState
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          value
-              ? 'Suscrito a $topic'
-              : 'Cancelaste suscripción de $topic',
+          value ? 'Suscrito a $topic' : 'Cancelaste suscripción de $topic',
         ),
       ),
     );
@@ -94,9 +123,7 @@ class _NotificationTopicsScreenState
               ],
             ),
           ),
-
           const SizedBox(height: 24),
-
           ...topics.entries.map(
             (entry) => Container(
               margin: const EdgeInsets.only(bottom: 16),
@@ -119,9 +146,7 @@ class _NotificationTopicsScreenState
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  subtitle: Text(
-                    _getSubtitle(entry.key),
-                  ),
+                  subtitle: Text(_getSubtitle(entry.key)),
                 ),
               ),
             ),
